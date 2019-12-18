@@ -1,0 +1,328 @@
+/*******************************************************************************
+Copyright (C) 2019 Eden Harris
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*******************************************************************************/
+
+.button {
+  display: inline-block;
+  height: 40px;
+  width: 120px;
+  
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  /*overflow: hidden;*/
+  background-color: rgba(255,255,255,0.75);
+  color: #000000;
+  padding: 5px 20px 0px;
+  
+  border:2px solid black;
+
+  text-align: center;
+  /*font: bold 3.2em/100px "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;*/
+  user-select: none;
+  
+  appearance: none;
+
+  /*
+  -webkit-box-shadow: 0 8px 0 #3f3f3f;
+  -moz-box-shadow: 0 8px 0 #3f3f3f;
+  box-shadow: 0 8px 0 #3f3f3f;
+
+  text-shadow: 0 2px 2px rgba(255, 255, 255, 0.2);
+  */
+}
+
+.button:hover {
+
+
+  box-shadow: 0px 0px 2px 1px rgba(0,0,0,0.75);
+  
+}
+
+.button:active{
+  background-color: rgba(63,63,63,0.75);
+}
+
+.button:focus {
+  outline: none
+}
+
+html, body {
+  width:  100%;
+  height: 100%;
+  margin: 0px;
+  
+  overflow:hidden;
+}
+
+kbd{
+  border:1px solid gray;
+  vertical-align: middle;
+  font-size:0.75em;
+  box-shadow:0 1px 0 1px #ccc, 0 1px 0 2px #444;
+  -webkit-border-radius:1px;
+  -moz-border-radius:1px;
+  border-radius:1px;
+  margin:0px 4px;
+  padding:0px 3px;
+}
+
+kbdCopy{
+  border:1px solid gray;
+  /*font-size:1.2em;*/
+  box-shadow:1px 0 1px 0 #eee, 0 2px 0 2px #ccc, 0 2px 0 3px #444;
+  -webkit-border-radius:3px;
+  -moz-border-radius:3px;
+  border-radius:3px;
+  margin:2px 3px;
+  padding:1px 5px;
+}
+
+canvas { 
+	display:block;
+	touch-action: none; /* Disable touch behaviors, like pan and zoom */
+	z-index: 100;
+ }
+ 
+#navBarTable {
+  width:100%; 
+  text-align: center; 
+  table-layout: fixed;
+}
+ 
+#topbar {
+  position:absolute;
+  height:30px;
+  width:calc(100% - 50px);
+  
+  z-index: 200;
+  top: 5px;
+  left: 5px;
+  bottom: 5px;
+    
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  /*overflow: hidden;*/
+  background-color: rgba(255,255,255,0.75);
+  color: #000000;
+  padding: 5px 20px 0px;
+  
+  border:2px solid black;
+}
+
+#fullbody {
+  position:absolute;
+  width:calc(100% - 50px);
+  z-index: 200;
+  top: 49px;
+  left: 5px;
+  bottom: 5px;
+  
+  overflow-y: auto;
+    
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(255,255,255,0.75);
+  color: #000000;
+  padding: 5px 20px 0px;
+  
+  border:2px solid black;
+}
+
+
+
+#infobox {
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(0,255,255,0.25);
+  
+  padding:  5px 20px;
+  
+  /*border:2px solid;*/
+  border-style: solid;
+  border-width: 2px;
+  border-color: #00ffff;
+}
+
+#statbox {
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(0,255,0,0.25);
+  
+  padding:  5px 20px;
+  
+  /*border:2px solid;*/
+  border-style: solid;
+  border-width: 2px;
+  border-color: #00ff00;
+}
+
+#warningbox {
+
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(255,0,0,0.25);
+  
+  padding:  5px 20px;
+  
+  /*border:2px solid;*/
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ff0000;
+}
+
+#alphawarningbox {
+
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(255,255,0,0.25);
+  
+  padding:  5px 20px;
+  
+  /*border:2px solid;*/
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ffff00;
+}
+ 
+#menu {
+  position:absolute;
+  width:240px;
+  /*height:calc(100% - 15px);*/
+  z-index: 200;
+  top: 49px;
+  left: 5px;
+  bottom: 5px;
+  
+  overflow-y: auto;
+    
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(255,255,255,0.75);
+  color: #000000;
+  padding: 0px 20px;
+  
+  border:2px solid black;
+}
+
+#copyright {
+  font-size: 50%;
+  position:absolute;
+  left: 300px;
+  bottom: 5px;
+}
+
+#navigation {
+  position: absolute;
+  display: table;
+
+  width: 250px;
+  right: 5px;
+
+  
+  z-index: 200;
+  top: 49px;
+}
+
+#alignRight {
+  text-align: right;
+}
+
+/*http://erraticdev.blogspot.com.au/2011/08/cross-browser-vertical-text.html*/
+#legend {
+  position: absolute;
+  overflow: hidden;
+  display: table;
+  right: -240px;
+  width: 250px;
+
+  
+  z-index: 200;
+  top: 94px;
+  /*bottom: 5px;*/
+  
+  
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  
+  background-color: rgba(255,255,255,0.75);
+  color: #000000;
+  padding: 0px 20px;
+  
+  border:2px solid black;
+  
+  transition: right 0.5s ease;
+  
+}
+ 
+
+#legend:hover{
+
+  right: 5px;
+}  
+
+#legendouter {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  overflow: hidden;
+} 
+
+#legendhead {
+
+  float: left;
+
+  height: 11em;
+  width: 1.0em;
+  
+  overflow: hidden;
+  
+	margin-right: 1em;
+}
+
+#legendvert {
+  line-height: 1.0em;
+  
+  display: block;
+  
+  white-space: nowrap;
+  
+  
+  transform: rotate(270deg) translate(-11em,0);
+  transform-origin: 0 0;
+  
+  text-align: center;
+}
+
+
+#legendcontent {
+  float:left;
+  width: 200px;
+}
+
+#legend img {
+  width: 16px;
+  height: 16px;
+}
+
