@@ -84,7 +84,6 @@ export default class Game {
     }
     //this.importSvg(coast[96]);
     
-    console.log("hi");
 
   }
   
@@ -116,8 +115,11 @@ export default class Game {
     let e = false;
     const relative = [];
     let rel = false;
+    let type = 'c';
+    let pointCount = 0;
     
     for(let i = 0; i < data.length; ++i){
+      
       if(data[i] == 'm' || data[i] == 'c'){
         if(num){
           points.push(parseFloat(value));
@@ -127,22 +129,57 @@ export default class Game {
           value = "";
         }
         rel = true;
+        
+        type = data[i];
+        pointCount = 0;
       }
       else if(data[i] == ' ' || data[i] == ','){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
+          pointCount++;
           
           num = false;
           value = "";
         }
         else if(e){
           const p = parseFloat(value);
-          points[points.length-1] = Math.pow(points[points.length-1], p);
+          points[points.length-1] = points[points.length-1] * Math.pow(10, p);
           e = false;
+          
         }
+        
+        
       }
       else if(isNumeric(data[i]) || data[i] == '-' || data[i] == '.'){
+        if(!num && !e){
+          if(pointCount == 6)
+            pointCount = 0;
+          
+          if(type == 'l' && pointCount == 0){
+            points.push(0);
+            points.push(0);
+            points.push(0);
+            points.push(0);
+            relative.push(rel);
+            relative.push(rel);
+            relative.push(rel);
+            relative.push(rel);
+            pointCount = 4;
+          }
+          else if(type == 'L' && pointCount == 0){
+            points.push(0);
+            points.push(0);
+            points.push(0);
+            points.push(0);
+            relative.push(true);
+            relative.push(true);
+            relative.push(true);
+            relative.push(true);
+            pointCount = 4;
+          }
+        }
+        
         value += data[i];
         if(!e)
           num = true;
@@ -150,6 +187,8 @@ export default class Game {
       else if(data[i] == 'e'){
         points.push(parseFloat(value));
         relative.push(rel);
+        pointCount++;
+        
         num = false;
         value = "";
         e = true;
@@ -176,6 +215,9 @@ export default class Game {
         relative.push(rel);
         relative.push(rel);
         relative.push(rel);
+        
+        type = data[i];
+        pointCount = 4;
       }
       else if(data[i] == 'L'){
         if(num){
@@ -195,6 +237,9 @@ export default class Game {
         relative.push(true);
         relative.push(true);
         relative.push(true);
+        
+        type = data[i];
+        pointCount = 4;
       }
       else{
         alert(data[i]);
