@@ -34,6 +34,9 @@ function isAlphaNumeric(inputtxt){
 
 class MapData {
   coast: Array<Array<number>> = [];
+  mountains:Array<Array<number>> = [];
+  forest: Array<Array<number>> = [];
+  rivers: Array<Array<number>> = [];
 }
 
 export default class Game {
@@ -52,25 +55,49 @@ export default class Game {
     this.importMap();
   }  
   
-  draw = () => {
+  drawBezier = (data: Array<number>, a_zoom: number) => {
     const context = this.context2d;
-    for(let i = 0; i < this.mapData.coast.length; ++i){
-      const data = this.mapData.coast[i];
-      
+  
+    context.beginPath();
+    context.moveTo(data[0], data[1]);
+    
+    const offset = (data.length-2) % 6;
+    
+    for(let j = 2; j < data.length - offset; j+= 6){
+      context.bezierCurveTo(data[j], data[j+1], data[j+2], data[j+3], data[j+4], data[j+5]);
+    }
+    
+    context.fill();
+    context.stroke();
+    /*
+    context.lineWidth = 1.0/a_zoom;
+    context.fillStyle = 'red';
+    for(let j = 0; j < data.length - offset; j+= 6){
       context.beginPath();
-      context.moveTo(data[0], data[1]);
-      
-      const offset = (data.length-2) % 6
-      //if( != 0){
-      //  alert("Error in " + i);
-      //}
-      
-      for(let j = 2; j < data.length - offset; j+= 6){
-        context.bezierCurveTo(data[j], data[j+1], data[j+2], data[j+3], data[j+4], data[j+5]);
-      }
-      
+      context.arc(data[j], data[j+1], 3, 0, 2 * Math.PI);
       context.stroke();
     }
+    
+    context.fillStyle = 'blue';
+    for(let j = 0; j < data.length - offset; j+= 6){
+      context.fillText('' + j, data[j]+5, data[j+1]);
+    }
+    */
+  }
+  
+  draw = (a_zoom: number) => {
+    const context = this.context2d;
+    
+    context.fillStyle = 'rgb(127,255,127)';
+    for(let i = 0; i < this.mapData.coast.length; ++i){
+      this.drawBezier(this.mapData.coast[i], a_zoom);
+    }
+    
+    context.fillStyle = 'rgb(127,127,127)';
+    for(let i = 0; i < this.mapData.mountains.length; ++i){
+      this.drawBezier(this.mapData.mountains[i], a_zoom);
+    }
+    
   }
   
   importMap = () => {
@@ -80,11 +107,14 @@ export default class Game {
     //const xmlDoc = parser.parseFromString(this.text,"text/xml");
     const coast = rawMapData.coast;
     for(let i = 0; i < coast.length; ++i){
-      this.importSvg(coast[i]);
+      this.importSvg(coast[i], this.mapData.coast);
     }
     //this.importSvg(coast[96]);
     
-
+    const mountains = rawMapData.mountains;
+    for(let i = 0; i < mountains.length; ++i){
+      this.importSvg(mountains[i], this.mapData.mountains);
+    }
   }
   
   /*
@@ -107,7 +137,7 @@ export default class Game {
   }
   */
   
-  importSvg = (data: string) => {
+  importSvg = (data: string, buffer: Array<Array<number>>) => {
     
     const points = [];
     let num = false;
@@ -120,7 +150,7 @@ export default class Game {
     
     for(let i = 0; i < data.length; ++i){
       
-      if(data[i] == 'm' || data[i] == 'c'){
+      if(data[i] == 'M' || data[i] == 'm' || data[i] == 'c'){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
@@ -128,7 +158,11 @@ export default class Game {
           num = false;
           value = "";
         }
-        rel = true;
+        
+        if(data[i] == 'm' || data[i] == 'c')
+          rel = true;
+        else
+          rel = false;
         
         type = data[i];
         pointCount = 0;
@@ -146,7 +180,7 @@ export default class Game {
           const p = parseFloat(value);
           points[points.length-1] = points[points.length-1] * Math.pow(10, p);
           e = false;
-          
+          value = ""
         }
         
         
@@ -280,7 +314,7 @@ export default class Game {
         points[i+5] += points[i-1];
     }
     
-    this.mapData.coast.push(points);
+    buffer.push(points);
   }
   
   exportJson = () => {

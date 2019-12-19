@@ -84,9 +84,8 @@ export default class Game {
   mvp: mat4 = mat4.create();//new Mat4x4();
   invMvp: mat4 = mat4.create();//new Mat4x4();
   cameraPosition: vec4 = vec4.fromValues(0,0,0,1);//new Vec4(0,0,0,1);
-  highlightedHex: vec4 = vec4.fromValues(0,0,0,1);//new Vec4(0,0,0,1);
-  selectedHex: vec4 = vec4.fromValues(0,0,0,1);//new Vec4(0,0,0,1);
-	selected: boolean = false;
+  mouseWorldX: number = 0;
+  mouseWorldY: number = 0;
   
   enabledIcons: boolean = true;
   enabledDrawHexCoords = false;
@@ -168,8 +167,7 @@ export default class Game {
     const posyText = getQueryVariable("y");
     const zoomText = getQueryVariable("zoom");
     let zoom: number = parseFloat(zoomText);
-    const isSelected = getQueryVariable("selected");
-    
+
 
     this.iconFighter = new Image();
     this.iconCleric = new Image();
@@ -393,7 +391,7 @@ export default class Game {
     }
     
     
-    this.map.draw();
+    this.map.draw(this.zoom);
     
     context.lineWidth = 1;
     
@@ -406,7 +404,9 @@ export default class Game {
     
     context.fillStyle = 'black';
     
-    context.fillText('' +this.zoom.toString(), canvas.width-100, canvas.height-60);
+    context.fillText('' + this.mouseWorldX, canvas.width-100, canvas.height-80);
+    context.fillText('' + this.mouseWorldY, canvas.width-100, canvas.height-70);
+    context.fillText('' + this.zoom.toString(), canvas.width-100, canvas.height-60);
     context.fillText('' + this.mvp[0].toString() + ' ' + this.mvp[1].toString(), canvas.width-100, canvas.height-50);
     context.fillText('' + this.mvp[4].toString() + ' ' + this.mvp[5].toString(), canvas.width-100, canvas.height-40);
     context.fillText('' + this.mvp[12].toString() + ' ' + this.mvp[13].toString(), canvas.width-100, canvas.height-30);
@@ -499,15 +499,6 @@ export default class Game {
     
     if (a_event.button == 0) {
       this.mouse.leftDown = false;
-    }
-    
-    if(this.selected)
-    {
-    	var t = Date.now();
-    	this.selected = false;
-    	
-
-    	this.render();
     }
     
   }
@@ -625,18 +616,11 @@ export default class Game {
   touchEndEvent = (a_event) => {
     this.mouse.leftDown = false;
     
-    if(this.selected)
-    {
-    	var t = Date.now();
-    	this.selected = false;
-    	
-    	this.render();
-    }
   }
 
 
   mouseMoveEvent = (a_eventData) => {
-	  var redraw = false;
+	  let redraw = false;
     var canvas=document.getElementById("canvas");
     var rect = canvas.getBoundingClientRect();
     var borderWidth = canvas.style.borderWidth;
@@ -654,9 +638,13 @@ export default class Game {
     var pos = vec4.fromValues(x,y,0,1);
     pos = vec4.transformMat4(vec4.create(), pos, this.invMvp);
 
+    this.mouseWorldX = pos[0];
+    this.mouseWorldY = pos[1];
 
     this.mouse.x = x;
     this.mouse.y = y;
+    
+    //redraw = true;//hack to view text
     
     if(redraw)
 	  {
