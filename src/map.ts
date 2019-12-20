@@ -118,6 +118,17 @@ export default class Game {
         this.drawBezier(mapData.mountains[i], a_zoom);
     }
     
+    context.fillStyle = 'rgb(0,127,0)';
+    for(let i = 0; i < mapData.forest.length; ++i){
+      const outside = 
+        mapData.boundingBox[2][i][0] > a_boundingBox[2] || 
+        mapData.boundingBox[2][i][2] < a_boundingBox[0] || 
+        mapData.boundingBox[2][i][1] > a_boundingBox[3] || 
+        mapData.boundingBox[2][i][3] < a_boundingBox[1];
+      if(!outside)
+        this.drawBezier(mapData.forest[i], a_zoom);
+    }
+    
   }
   
   importMap = () => {
@@ -135,6 +146,12 @@ export default class Game {
     const mountains = rawMapData.mountains;
     for(let i = 0; i < mountains.length; ++i){
       this.importSvg(mountains[i], this.mapData.mountains, this.mapData.boundingBox[1]);
+    }
+    
+    this.mapData.boundingBox.push([]);
+    const forest = rawMapData.forest;
+    for(let i = 0; i < forest.length; ++i){
+      this.importSvg(forest[i], this.mapData.forest, this.mapData.boundingBox[2]);
     }
   }
   
