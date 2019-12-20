@@ -318,8 +318,7 @@ export default class Game {
       
     context.font="10px Arial";
     context.fillStyle = "rgba(0, 0, 0, 255)"
-    //context.fillText("Pathfinder Online Image and place name copyright Goblinworks inc, remaining material copyright Eden Harris 2015", 300, canvas.height-10);
-    
+
     	
     if(this.zoomIn || this.zoomOut)
     	redraw = true;
@@ -330,6 +329,22 @@ export default class Game {
       this.mvp[0], this.mvp[1], 
       this.mvp[4], this.mvp[5],
       this.mvp[12], this.mvp[13]);
+      
+    const p = vec4.fromValues(0,0,0,1);
+    const v = vec4.create();
+    vec4.transformMat4(v, p, this.invMvp);
+    
+    const boundingBox = vec4.create();
+    boundingBox[0] = v[0];
+    boundingBox[1] = v[1];
+    
+    p[0] = canvas.width;
+    p[1] = canvas.height;
+    
+    vec4.transformMat4(v, p, this.invMvp);
+    
+    boundingBox[2] = v[0];
+    boundingBox[3] = v[1];
     
     const ctx = context;
     // Define the points as {x, y}
@@ -391,7 +406,7 @@ export default class Game {
     }
     
     
-    this.map.draw(this.zoom);
+    this.map.draw(this.zoom, boundingBox);
     
     context.lineWidth = 1;
     
@@ -437,7 +452,6 @@ export default class Game {
     */
 
   }
-  
 
   
   drawPaper = (a_context: any) => {

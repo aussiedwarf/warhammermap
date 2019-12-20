@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 import { saveAs } from 'file-saver';
+import { vec4 } from 'gl-matrix';
 import * as rawMapData from './data/raw.json';
 //import * as xmlData from './data/raw.txt';
 
@@ -37,6 +38,7 @@ class MapData {
   mountains:Array<Array<number>> = [];
   forest: Array<Array<number>> = [];
   rivers: Array<Array<number>> = [];
+  boundingBox: Array<Array<vec4>> = [];
 }
 
 export default class Game {
@@ -84,36 +86,55 @@ export default class Game {
     }
     */
   }
+  /*
+  a<x && b>y
+  a<x && b>x
+  a<y && b>y
+  */
   
-  draw = (a_zoom: number) => {
+  draw = (a_zoom: number, a_boundingBox: vec4) => {
     const context = this.context2d;
+    const mapData = this.mapData;
     
     context.fillStyle = 'rgb(127,255,127)';
-    for(let i = 0; i < this.mapData.coast.length; ++i){
-      this.drawBezier(this.mapData.coast[i], a_zoom);
+    for(let i = 0; i < mapData.coast.length; ++i){
+      const outside = 
+        mapData.boundingBox[0][i][0] > a_boundingBox[2] || 
+        mapData.boundingBox[0][i][2] < a_boundingBox[0] || 
+        mapData.boundingBox[0][i][1] > a_boundingBox[3] || 
+        mapData.boundingBox[0][i][3] < a_boundingBox[1];
+      if(!outside)
+        this.drawBezier(mapData.coast[i], a_zoom);
     }
     
     context.fillStyle = 'rgb(127,127,127)';
-    for(let i = 0; i < this.mapData.mountains.length; ++i){
-      this.drawBezier(this.mapData.mountains[i], a_zoom);
+    for(let i = 0; i < mapData.mountains.length; ++i){
+      const outside = 
+        mapData.boundingBox[1][i][0] > a_boundingBox[2] || 
+        mapData.boundingBox[1][i][2] < a_boundingBox[0] || 
+        mapData.boundingBox[1][i][1] > a_boundingBox[3] || 
+        mapData.boundingBox[1][i][3] < a_boundingBox[1];
+      if(!outside)
+        this.drawBezier(mapData.mountains[i], a_zoom);
     }
     
   }
   
   importMap = () => {
-    
+    this.mapData.boundingBox.push([]);
     
     //const parser = new DOMParser();
     //const xmlDoc = parser.parseFromString(this.text,"text/xml");
     const coast = rawMapData.coast;
     for(let i = 0; i < coast.length; ++i){
-      this.importSvg(coast[i], this.mapData.coast);
+      this.importSvg(coast[i], this.mapData.coast, this.mapData.boundingBox[0]);
     }
     //this.importSvg(coast[96]);
     
+    this.mapData.boundingBox.push([]);
     const mountains = rawMapData.mountains;
     for(let i = 0; i < mountains.length; ++i){
-      this.importSvg(mountains[i], this.mapData.mountains);
+      this.importSvg(mountains[i], this.mapData.mountains, this.mapData.boundingBox[1]);
     }
   }
   
@@ -137,7 +158,7 @@ export default class Game {
   }
   */
   
-  importSvg = (data: string, buffer: Array<Array<number>>) => {
+  importSvg = (a_data: string, a_buffer: Array<Array<number>>, a_boundingBox: Array<vec4>) => {
     
     const points = [];
     let num = false;
@@ -148,9 +169,9 @@ export default class Game {
     let type = 'c';
     let pointCount = 0;
     
-    for(let i = 0; i < data.length; ++i){
+    for(let i = 0; i < a_data.length; ++i){
       
-      if(data[i] == 'M' || data[i] == 'm' || data[i] == 'c'){
+      if(a_data[i] == 'M' || a_data[i] == 'm' || a_data[i] == 'c'){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
@@ -159,15 +180,15 @@ export default class Game {
           value = "";
         }
         
-        if(data[i] == 'm' || data[i] == 'c')
+        if(a_data[i] == 'm' || a_data[i] == 'c')
           rel = true;
         else
           rel = false;
         
-        type = data[i];
+        type = a_data[i];
         pointCount = 0;
       }
-      else if(data[i] == ' ' || data[i] == ','){
+      else if(a_data[i] == ' ' || a_data[i] == ','){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
@@ -185,7 +206,7 @@ export default class Game {
         
         
       }
-      else if(isNumeric(data[i]) || data[i] == '-' || data[i] == '.'){
+      else if(isNumeric(a_data[i]) || a_data[i] == '-' || a_data[i] == '.'){
         if(!num && !e){
           if(pointCount == 6)
             pointCount = 0;
@@ -214,11 +235,11 @@ export default class Game {
           }
         }
         
-        value += data[i];
+        value += a_data[i];
         if(!e)
           num = true;
       }
-      else if(data[i] == 'e'){
+      else if(a_data[i] == 'e'){
         points.push(parseFloat(value));
         relative.push(rel);
         pointCount++;
@@ -228,10 +249,10 @@ export default class Game {
         e = true;
       }
       //close
-      else if(data[i] == 'z'){
+      else if(a_data[i] == 'z'){
         
       }
-      else if(data[i] == 'l'){
+      else if(a_data[i] == 'l'){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
@@ -250,10 +271,10 @@ export default class Game {
         relative.push(rel);
         relative.push(rel);
         
-        type = data[i];
+        type = a_data[i];
         pointCount = 4;
       }
-      else if(data[i] == 'L'){
+      else if(a_data[i] == 'L'){
         if(num){
           points.push(parseFloat(value));
           relative.push(rel);
@@ -272,11 +293,11 @@ export default class Game {
         relative.push(true);
         relative.push(true);
         
-        type = data[i];
+        type = a_data[i];
         pointCount = 4;
       }
       else{
-        alert(data[i]);
+        alert(a_data[i]);
       }
       
     }
@@ -314,7 +335,17 @@ export default class Game {
         points[i+5] += points[i-1];
     }
     
-    buffer.push(points);
+    const boundingBox = vec4.fromValues(points[0], points[1], points[2], points[3]);
+    
+    for(let i = 6; i < points.length; i+=6){
+      boundingBox[0] = Math.min(boundingBox[0], points[i]);
+      boundingBox[1] = Math.min(boundingBox[1], points[i+1]);
+      boundingBox[2] = Math.max(boundingBox[2], points[i]);
+      boundingBox[3] = Math.max(boundingBox[3], points[i+1]);
+    }
+    
+    a_buffer.push(points);
+    a_boundingBox.push(boundingBox);
   }
   
   exportJson = () => {
