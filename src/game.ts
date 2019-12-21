@@ -316,8 +316,7 @@ export default class Game {
     
     
       
-    context.font="10px Arial";
-    context.fillStyle = "rgba(0, 0, 0, 255)"
+    
 
     	
     if(this.zoomIn || this.zoomOut)
@@ -415,7 +414,8 @@ export default class Game {
       1.0, 0.0, 
       0.0, 1.0,
       0.0, 0.0);
-  
+      
+    context.font="10px Arial";
     
     context.fillStyle = 'black';
     

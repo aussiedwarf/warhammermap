@@ -39,6 +39,7 @@ class MapData {
   forest: Array<Array<number>> = [];
   rivers: Array<Array<number>> = [];
   boundingBox: Array<Array<vec4>> = [];
+  complete: Array<Array<boolean>> = [];
 }
 
 export default class Game {
@@ -57,46 +58,65 @@ export default class Game {
     this.importMap();
   }  
   
-  drawBezier = (data: Array<number>, a_zoom: number) => {
+  drawBezierLine = (data: Array<number>, a_zoom: number) => {
     const context = this.context2d;
   
     context.beginPath();
     context.moveTo(data[0], data[1]);
     
-    const offset = (data.length-2) % 6;
-    
-    for(let j = 2; j < data.length - offset; j+= 6){
+    for(let j = 2; j < data.length/* - offset*/; j+= 6){
       context.bezierCurveTo(data[j], data[j+1], data[j+2], data[j+3], data[j+4], data[j+5]);
     }
     
-    context.fill();
     context.stroke();
+  }
+  
+  drawBezier = (data: Array<number>, a_complete: boolean, a_prevComplete: boolean, a_zoom: number) => {
+    const context = this.context2d;
+  
+    if(a_prevComplete){
+      context.beginPath();
+    }
+    context.moveTo(data[0], data[1]);
+    
+    //const offset = (data.length-2) % 6;
+    
+    for(let j = 2; j < data.length/* - offset*/; j+= 6){
+      context.bezierCurveTo(data[j], data[j+1], data[j+2], data[j+3], data[j+4], data[j+5]);
+    }
+    
+    if(a_complete){
+      context.fill();
+      context.stroke();
+    }
     /*
     context.lineWidth = 1.0/a_zoom;
     context.fillStyle = 'red';
-    for(let j = 0; j < data.length - offset; j+= 6){
+    for(let j = 0; j < data.length; j+= 6){
       context.beginPath();
-      context.arc(data[j], data[j+1], 3, 0, 2 * Math.PI);
+      context.arc(data[j], data[j+1], 3/a_zoom, 0, 2 * Math.PI);
       context.stroke();
     }
     
+    const s = 10 / a_zoom;
+    const t = '' + s.toString();
+    context.font= t + "px Arial";
+    
     context.fillStyle = 'blue';
-    for(let j = 0; j < data.length - offset; j+= 6){
-      context.fillText('' + j, data[j]+5, data[j+1]);
+    for(let j = 0; j < data.length; j+= 6){
+      context.fillText('' + j, data[j]+s, data[j+1]);
     }
     */
   }
-  /*
-  a<x && b>y
-  a<x && b>x
-  a<y && b>y
-  */
+
   
   draw = (a_zoom: number, a_boundingBox: vec4) => {
     const context = this.context2d;
     const mapData = this.mapData;
     
+    context.strokeStyle = 'rgb(0,0,0)';
     context.fillStyle = 'rgb(127,255,127)';
+    let prevComplete = true;
     for(let i = 0; i < mapData.coast.length; ++i){
       const outside = 
         mapData.boundingBox[0][i][0] > a_boundingBox[2] || 
@@ -104,10 +124,13 @@ export default class Game {
         mapData.boundingBox[0][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[0][i][3] < a_boundingBox[1];
       if(!outside)
-        this.drawBezier(mapData.coast[i], a_zoom);
+        this.drawBezier(mapData.coast[i], mapData.complete[0][i], prevComplete, a_zoom);
+        
+      prevComplete = mapData.complete[0][i];
     }
     
     context.fillStyle = 'rgb(127,127,127)';
+    prevComplete = true;
     for(let i = 0; i < mapData.mountains.length; ++i){
       const outside = 
         mapData.boundingBox[1][i][0] > a_boundingBox[2] || 
@@ -115,43 +138,72 @@ export default class Game {
         mapData.boundingBox[1][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[1][i][3] < a_boundingBox[1];
       if(!outside)
-        this.drawBezier(mapData.mountains[i], a_zoom);
+        this.drawBezier(mapData.mountains[i], mapData.complete[1][i], prevComplete, a_zoom);
+      
+      prevComplete = mapData.complete[1][i];
     }
     
-    context.fillStyle = 'rgb(0,127,0)';
+    prevComplete = true;
     for(let i = 0; i < mapData.forest.length; ++i){
+      context.fillStyle = 'rgb(0,127,0)';
       const outside = 
         mapData.boundingBox[2][i][0] > a_boundingBox[2] || 
         mapData.boundingBox[2][i][2] < a_boundingBox[0] || 
         mapData.boundingBox[2][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[2][i][3] < a_boundingBox[1];
       if(!outside)
-        this.drawBezier(mapData.forest[i], a_zoom);
+        this.drawBezier(mapData.forest[i], mapData.complete[2][i], prevComplete, a_zoom);
+      
+      prevComplete = mapData.complete[2][i];
+    }
+    
+    context.strokeStyle = 'rgb(0,0,255)';
+    prevComplete = true;
+    for(let i = 0; i < mapData.rivers.length; ++i){
+      const outside = 
+        mapData.boundingBox[3][i][0] > a_boundingBox[2] || 
+        mapData.boundingBox[3][i][2] < a_boundingBox[0] || 
+        mapData.boundingBox[3][i][1] > a_boundingBox[3] || 
+        mapData.boundingBox[3][i][3] < a_boundingBox[1];
+      if(!outside)
+        this.drawBezierLine(mapData.rivers[i], a_zoom);
+      
+      prevComplete = mapData.complete[3][i];
     }
     
   }
   
   importMap = () => {
-    this.mapData.boundingBox.push([]);
+    const mapData = this.mapData;
+    mapData.boundingBox.push([]);
+    mapData.complete.push([]);
     
     //const parser = new DOMParser();
     //const xmlDoc = parser.parseFromString(this.text,"text/xml");
     const coast = rawMapData.coast;
     for(let i = 0; i < coast.length; ++i){
-      this.importSvg(coast[i], this.mapData.coast, this.mapData.boundingBox[0]);
+      this.importSvg(coast[i], mapData.coast, mapData.boundingBox[0], mapData.complete[0]);
     }
-    //this.importSvg(coast[96]);
     
-    this.mapData.boundingBox.push([]);
+    mapData.boundingBox.push([]);
+    mapData.complete.push([]);
     const mountains = rawMapData.mountains;
     for(let i = 0; i < mountains.length; ++i){
-      this.importSvg(mountains[i], this.mapData.mountains, this.mapData.boundingBox[1]);
+      this.importSvg(mountains[i], mapData.mountains, mapData.boundingBox[1], mapData.complete[1]);
     }
     
-    this.mapData.boundingBox.push([]);
+    mapData.boundingBox.push([]);
+    mapData.complete.push([]);
     const forest = rawMapData.forest;
     for(let i = 0; i < forest.length; ++i){
-      this.importSvg(forest[i], this.mapData.forest, this.mapData.boundingBox[2]);
+      this.importSvg(forest[i], mapData.forest, mapData.boundingBox[2], mapData.complete[2]);
+    }
+    
+    mapData.boundingBox.push([]);
+    mapData.complete.push([]);
+    const rivers = rawMapData.rivers;
+    for(let i = 0; i < rivers.length; ++i){
+      this.importSvg(rivers[i], mapData.rivers, mapData.boundingBox[3], mapData.complete[3]);
     }
   }
   
@@ -175,7 +227,7 @@ export default class Game {
   }
   */
   
-  importSvg = (a_data: string, a_buffer: Array<Array<number>>, a_boundingBox: Array<vec4>) => {
+  importSvg = (a_data: string, a_buffer: Array<Array<number>>, a_boundingBox: Array<vec4>, a_complete: Array<boolean>) => {
     
     const points = [];
     let num = false;
@@ -185,6 +237,7 @@ export default class Game {
     let rel = false;
     let type = 'c';
     let pointCount = 0;
+    let complete = true;
     
     for(let i = 0; i < a_data.length; ++i){
       
@@ -268,6 +321,9 @@ export default class Game {
       //close
       else if(a_data[i] == 'z'){
         
+      }
+      else if(a_data[i] == 'Z'){
+        complete = false;
       }
       else if(a_data[i] == 'l'){
         if(num){
@@ -363,6 +419,7 @@ export default class Game {
     
     a_buffer.push(points);
     a_boundingBox.push(boundingBox);
+    a_complete.push(complete);
   }
   
   exportJson = () => {
