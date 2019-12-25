@@ -47,11 +47,11 @@ import * as imageX from './images/x.png';
 //https://css-tricks.com/snippets/javascript/get-url-variables/
 function getQueryVariable(variable: any)
 {
-	 var query = window.location.search.substring(1);
-	 var vars = query.split("&");
-	 for (var i=0;i<vars.length;i++) 
+	 const query = window.location.search.substring(1);
+	 const vars = query.split("&");
+	 for (let i=0;i<vars.length;i++) 
 	 {
-		 var pair = vars[i].split("=");
+		 const pair = vars[i].split("=");
 		 if(pair[0] == variable){return pair[1];}
 	 }
 	 return "";
@@ -466,17 +466,17 @@ export default class Game {
   }
   
   mouseDoubleClick = (a_eventData) => {
-	  var canvas=this.canvas;
-    var rect = canvas.getBoundingClientRect();
-    var borderWidth = canvas.style.borderWidth;
+	  const canvas=this.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const borderWidth = canvas.style.borderWidth;
     
 
-    var x = a_eventData.clientX - rect.left;
-    var y = a_eventData.clientY - rect.top;
+    const x = a_eventData.clientX - rect.left;
+    const y = a_eventData.clientY - rect.top;
 
     if (a_eventData.button == 0) 
     {
-      var pos = vec4.fromValues(x,y,0,1);
+      let pos = vec4.fromValues(x,y,0,1);
 		  pos = vec4.transformMat4(vec4.create(), pos, this.invMvp);
 
 		  this.render();
@@ -485,12 +485,12 @@ export default class Game {
   
   mouseDownEvent = (a_eventData) => {
 
-    var canvas=document.getElementById("canvas");
-    var rect = canvas.getBoundingClientRect();
-    var borderWidth = canvas.style.borderWidth;
+    const canvas=document.getElementById("canvas");
+    const rect = canvas.getBoundingClientRect();
+    const borderWidth = canvas.style.borderWidth;
 
-    var mouseX = a_eventData.clientX - rect.left;
-    var mouseY = a_eventData.clientY - rect.top;
+    const mouseX = a_eventData.clientX - rect.left;
+    const mouseY = a_eventData.clientY - rect.top;
 
     if (a_eventData.button == 0) 
     {
@@ -505,7 +505,7 @@ export default class Game {
 
 
   mouseUpEvent = (a_event) => {
-    var canvas=document.getElementById("canvas");
+    const canvas = this.canvas;
     
     if (a_event.button == 1) {
       this.mouse.middleDown = false;
@@ -519,19 +519,19 @@ export default class Game {
   
 
   calculateZoom = () => {
-	  var c=this.canvas;
-    var rect = c.getBoundingClientRect();
-    var borderWidth = c.style.borderWidth;
+	  const c=this.canvas;
+    const rect = c.getBoundingClientRect();
+    const borderWidth = c.style.borderWidth;
 
-    var mouseX = c.width/2;
-    var mouseY = c.height/2;
+    const mouseX = c.width/2;
+    const mouseY = c.height/2;
         
-    var oldScale = mat4.create();
+    const oldScale = mat4.create();
     oldScale[0] = this.zoom;
     oldScale[5] = this.zoom;
     
-    var v = vec4.fromValues(mouseX, mouseY, 0, 1);
-    var p = vec4.transformMat4(vec4.create(), v, this.invMvp); //model space point
+    const v = vec4.fromValues(mouseX, mouseY, 0, 1);
+    const p = vec4.transformMat4(vec4.create(), v, this.invMvp); //model space point
     
 
     if(this.zoomIn)
@@ -561,16 +561,16 @@ export default class Game {
     //s * (px + Vx) / t - px = Wx
 
     
-    var scale = mat4.create();
+    const scale = mat4.create();
     scale[0] = this.zoom;
     scale[1] = this.zoom;
 
     
-    var view = mat4.create();
+    const view = mat4.create();
     view[12] = oldScale[0] * (p[0] + this.matrixView[12]) / this.zoom - p[0];
     view[13] = oldScale[5] * (p[1] + this.matrixView[13]) / this.zoom - p[1];
     
-    var camera = mat4.invert(mat4.create(), view);
+    const camera = mat4.invert(mat4.create(), view);
     this.cameraPosition[0] = camera[12];
     this.cameraPosition[1] = camera[13];
     this.cameraPosition[2] = camera[14];
@@ -582,16 +582,16 @@ export default class Game {
   touchMoveEvent = (a_event) => {
     a_event.preventDefault();
     
-    var redraw = false;
+    let redraw = false;
     
-    var canvas=document.getElementById("canvas");
-    var rect = canvas.getBoundingClientRect();
-    var borderWidth = canvas.style.borderWidth;
+    const canvas=this.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const borderWidth = canvas.style.borderWidth;
     
-    var touch = a_event.targetTouches[0];
+    const touch = a_event.targetTouches[0];
 
-    var x = touch.pageX - rect.left;
-    var y = touch.pageY - rect.top;
+    const x = touch.pageX - rect.left;
+    const y = touch.pageY - rect.top;
 
     if(this.mouse.leftDown == true)
     {
@@ -599,7 +599,7 @@ export default class Game {
       redraw = true;
     }
     
-    var pos = vec4.fromValues(x,y,0,1);
+    let pos = vec4.fromValues(x,y,0,1);
     pos = vec4.transformMat4(vec4.create(), pos, this.invMvp);
 
     
@@ -614,11 +614,11 @@ export default class Game {
 
 
   touchStartEvent = (a_event) => {
-    var canvas=document.getElementById("canvas");
-    var rect = canvas.getBoundingClientRect();
-    var borderWidth = canvas.style.borderWidth;
+    const canvas=this.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const borderWidth = canvas.style.borderWidth;
     
-    var touch = a_event.targetTouches[0];
+    const touch = a_event.targetTouches[0];
 
     this.mouse.x = touch.pageX - rect.left;
     this.mouse.y = touch.pageY - rect.top;
@@ -635,12 +635,12 @@ export default class Game {
 
   mouseMoveEvent = (a_eventData) => {
 	  let redraw = false;
-    var canvas=document.getElementById("canvas");
-    var rect = canvas.getBoundingClientRect();
-    var borderWidth = canvas.style.borderWidth;
+    const canvas=this.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const borderWidth = canvas.style.borderWidth;
     
-    var x = a_eventData.clientX - rect.left;
-    var y = a_eventData.clientY - rect.top;
+    const x = a_eventData.clientX - rect.left;
+    const y = a_eventData.clientY - rect.top;
     
     
     if(this.mouse.leftDown == true)
@@ -649,7 +649,7 @@ export default class Game {
       redraw = true;
     }
     
-    var pos = vec4.fromValues(x,y,0,1);
+    let pos = vec4.fromValues(x,y,0,1);
     pos = vec4.transformMat4(vec4.create(), pos, this.invMvp);
 
     this.mouseWorldX = pos[0];
@@ -670,21 +670,21 @@ export default class Game {
   mouseScrollEvent = (a_eventData) => {
     a_eventData.preventDefault();
     
-    var wheelData = a_eventData.detail ? a_eventData.detail * -1 : a_eventData.wheelDelta / 40;
+    const wheelData = a_eventData.detail ? a_eventData.detail * -1 : a_eventData.wheelDelta / 40;
 
-    var c=document.getElementById("canvas");
-    var rect = c.getBoundingClientRect();
-    var borderWidth = c.style.borderWidth;
+    const c=this.canvas;
+    const rect = c.getBoundingClientRect();
+    const borderWidth = c.style.borderWidth;
 
-    var mouseX = a_eventData.clientX - rect.left;
-    var mouseY = a_eventData.clientY - rect.top;
+    const mouseX = a_eventData.clientX - rect.left;
+    const mouseY = a_eventData.clientY - rect.top;
         
-    var oldScale = mat4.create();
+    const oldScale = mat4.create();
     oldScale[0] = this.zoom;
     oldScale[5] = this.zoom;
     
-    var v = vec4.fromValues(mouseX, mouseY, 0, 1);
-    var p = vec4.transformMat4(vec4.create(), v, this.invMvp); //model space point
+    const v = vec4.fromValues(mouseX, mouseY, 0, 1);
+    const p = vec4.transformMat4(vec4.create(), v, this.invMvp); //model space point
     
 
     if(wheelData > 0)
@@ -713,18 +713,18 @@ export default class Game {
     //s * (px + Vx) / t - px = Wx
 
     
-    var scale = mat4.create();
+    const scale = mat4.create();
     scale[0] = this.zoom;
     scale[5] = this.zoom;
     /*todo
     scale.Scale(vec4.fromValues(this.zoom,this.zoom,1,1));
     */
     
-    var view = mat4.create();
+    const view = mat4.create();
     view[12] = oldScale[0] * (p[0] + this.matrixView[12]) / this.zoom - p[0];
     view[13] = oldScale[5] * (p[1] + this.matrixView[13]) / this.zoom - p[1];
     
-    var camera = mat4.invert(mat4.create(), view);//view.Inverse();
+    const camera = mat4.invert(mat4.create(), view);//view.Inverse();
     this.cameraPosition[0] = camera[12];
     this.cameraPosition[1] = camera[13];
     this.cameraPosition[2] = camera[14];
@@ -739,15 +739,15 @@ export default class Game {
 
 
   screenToWorld = (a_in) => {
-    var pos = vec4.transformMat4(vec4.create(), a_in, this.invMvp);
+    const pos = vec4.transformMat4(vec4.create(), a_in, this.invMvp);
     return pos;
   }
 
   moveCamera = (a_px, a_py, a_nx, a_ny) => { //prev, new
-    var start   = this.screenToWorld(vec4.fromValues(a_px, a_py, 0, 1));
-    var finish  = this.screenToWorld(vec4.fromValues(a_nx, a_ny, 0, 1));
+    const start   = this.screenToWorld(vec4.fromValues(a_px, a_py, 0, 1));
+    const finish  = this.screenToWorld(vec4.fromValues(a_nx, a_ny, 0, 1));
     
-    var move = vec4.sub(vec4.create(), start, finish);//start.Sub(finish);
+    const move = vec4.sub(vec4.create(), start, finish);//start.Sub(finish);
     
     this.cameraPosition = vec4.add(vec4.create(), this.cameraPosition, move);//this.cameraPosition.Add(move);
     this.cameraPosition[3]=1;
@@ -760,7 +760,7 @@ export default class Game {
 
   calculateMatricies = () => {
     const canvas = this.canvas;
-    //var context = canvas.getContext("2d");
+    //const context = this.context2d;
     
     //canvas.width  = window.innerWidth;
     //canvas.height = window.innerHeight;
@@ -790,7 +790,7 @@ export default class Game {
     mat4.ortho(this.matrixProjection, 0, canvas.width, 0, canvas.height, 0.1, 10);
     
     /*todo
-    var scale = new Mat4x4();
+    const scale = new Mat4x4();
     scale.v[0].x = this.zoom;
     scale.v[1].y = this.zoom;
     */
@@ -828,8 +828,8 @@ export default class Game {
 
 
   drawText = (a_context: CanvasRenderingContext2D) => {
-    //var canvas = document.getElementById("canvas");
-    //var context = canvas.getContext("2d");
+    //const canvas = this.canvas;
+    //const context = this.context2d;
     
     a_context.font="12px Arial";
     a_context.fillStyle = "rgba(255,255,255,1)";
