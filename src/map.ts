@@ -33,7 +33,21 @@ function isAlphaNumeric(inputtxt){
   }
 }
 
+class MapRef {
+  image: HTMLImageElement;
+  loaded: boolean = false;
+  loading: boolean = false;
+  show: boolean = false;
+  name: string = "";
+  link: string = "";
+  width: number = 0;
+  height: number = 0;
+  x: number = 0;
+  y: number = 0;
+}
+
 class MapData {
+  ref: Array<MapRef> = [];
   coast: Array<Array<number>> = [];
   mountains:Array<Array<number>> = [];
   forest: Array<Array<number>> = [];
@@ -42,7 +56,7 @@ class MapData {
   complete: Array<Array<boolean>> = [];
 }
 
-export default class Game {
+export default class Map {
   canvas: HTMLCanvasElement;
   context2d: CanvasRenderingContext2D;
   mapData: MapData;
@@ -57,6 +71,23 @@ export default class Game {
     
     this.importMap();
   }  
+  
+  toggleRefImage = (a_show: boolean, a_index: number) => {
+    const ref = this.mapData.ref[a_index];
+    ref.show = a_show;
+  
+    if(a_show && !ref.loaded && !ref.loading){
+      ref.image = new Image;
+      ref.loading = true;
+      
+      ref.image.onload = () => {
+        ref.loaded = true;
+      };
+      ref.image.onerror = () => {alert("error loading image");};
+      ref.image.src = ref.link;
+    }
+
+  }
   
   drawBezierLine = (data: Array<number>, a_zoom: number) => {
     const context = this.context2d;
@@ -127,7 +158,7 @@ export default class Game {
         this.drawBezier(mapData.coast[i], mapData.complete[0][i], prevComplete, a_zoom);
         
       prevComplete = mapData.complete[0][i];
-    }
+    }    
     
     context.fillStyle = 'rgb(127,127,127)';
     prevComplete = true;
@@ -171,9 +202,22 @@ export default class Game {
       prevComplete = mapData.complete[3][i];
     }
     
+    
+    context.globalAlpha = 0.5;
+    
+    for(let i = 0; i < this.mapData.ref.length;++i){
+      const ref = this.mapData.ref[i];
+    
+      if(ref.loaded && ref.show){
+        context.drawImage(ref.image, ref.x, ref.y, ref.width, ref.height);
+      }
+    }
+    
+    context.globalAlpha = 1.0;
   }
   
   importMap = () => {
+    
     const mapData = this.mapData;
     mapData.boundingBox.push([]);
     mapData.complete.push([]);
@@ -205,6 +249,21 @@ export default class Game {
     for(let i = 0; i < rivers.length; ++i){
       this.importSvg(rivers[i], mapData.rivers, mapData.boundingBox[3], mapData.complete[3]);
     }
+    
+    
+    for(let i = 0; i < rawMapData.ref.length; ++i){
+    const ref = new MapRef;
+    const src = rawMapData.ref[i];
+    
+    ref.name = src.name;
+    ref.link = src.link;
+    ref.width= src.width;
+    ref.height = src.height;
+    ref.x = src.x;
+    ref.y = src.y;
+    
+    mapData.ref.push(ref);
+  }
   }
   
   /*
@@ -424,12 +483,18 @@ export default class Game {
   
   exportJson = () => {
     
+    const map = {
+    coast: this.mapData.coast, 
+    mountains: this.mapData.mountains,
+    forest: this.mapData.forest,
+    rivers: this.mapData.rivers,
+    complete: this.mapData.complete};
   
-    const data = JSON.stringify(this.mapData);
+    const data = JSON.stringify(map);
     
     const filename = "map.json";
     const blob = new Blob([data], {type: "application:json;charset=utf-8"});
-    saveAs(blob, filename+".txt");
+    saveAs(blob, filename);
   }
   
 }

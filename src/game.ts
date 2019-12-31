@@ -13,6 +13,13 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+lifespan
+* young 0-15
+* adult 16-39
+* old 40-64
+* vulnerable 65+
+
 *******************************************************************************/
 
 import Mouse from './mouse';

@@ -41,6 +41,87 @@ import * as imageMonolith from './images/monolith.png';
 
 import './game.scss';
 
+type StateCheckBoxMap = {
+  checked: boolean
+}
+
+type PropsCheckBoxMap = {
+  index: number,
+  game: () => Game
+}
+
+type PropsCheckBoxArray = {
+  game: () => Game
+}
+
+class CheckBoxMap extends React.Component<PropsCheckBoxMap, StateCheckBoxMap> {
+  //state: StateCheckBoxMap;
+  index: number;
+  game: () => Game;
+  
+  constructor(props: PropsCheckBoxMap){
+    super(props); 
+    this.state = {
+      checked: false
+      };
+    this.game = props.game;
+    this.index = props.index;
+  }
+  
+  checked = (a_event: React.ChangeEvent<HTMLInputElement>) => {
+    const game = this.game();
+    game.map.toggleRefImage(!this.state.checked, this.index);
+  
+    this.setState({checked: !this.state.checked});
+    
+    
+  }
+  
+  render = () => {
+    const game = this.game();
+    
+    const ref = game.map.mapData.ref[this.index];
+    const name = ref.name;
+    
+    return(
+      <div>
+        <input type="checkbox" 
+          id="cbViewTypes" 
+          name="viewTypes" 
+          value="viewTypes" 
+          checked={this.state.checked} 
+          onChange={this.checked}/> {name}<br />
+      </div>
+    )
+  }
+}
+
+class CheckBoxArray extends React.Component<PropsCheckBoxArray, {}> {
+  game: () => Game;
+  
+  constructor(props: PropsCheckBoxArray){
+    super(props);
+    this.game = props.game;
+  }
+  
+  update = () => {
+    this.forceUpdate();
+  }
+
+  render = () => {
+    const boxes = [];
+    const game = this.game();
+    if(game){
+      const ref = game.map.mapData.ref;
+      
+      for (var i = 0; i < ref.length; i++) {
+        boxes.push(<CheckBoxMap key={i} game={this.game} index={i} />);
+      }
+    }
+    return boxes;
+  }
+}
+
 export class ExternalLinks extends React.Component {
   render = () => {
     return(
@@ -67,16 +148,17 @@ export class CommunityResources extends React.Component {
   }
 }
 
-type State = {
+type StateApp = {
   viewLandmarksState: boolean,
   viewRegionsState: boolean
 };
 
 export default class App extends React.Component {
-  state: State;
+  state: StateApp;
 
   game: Game = null;
   canvas: HTMLCanvasElement;
+  checkBoxArray: React.RefObject<CheckBoxArray>;
 
   constructor(props: any){
     super(props);
@@ -84,11 +166,18 @@ export default class App extends React.Component {
       viewLandmarksState: true,
       viewRegionsState: true
     }
+    
+    this.checkBoxArray = React.createRef();
+  }
+  
+  getGame = () => {
+    return this.game;
   }
   
   
   componentDidMount = () => {
     this.game = new Game(this.canvas);
+    this.checkBoxArray.current.update();
   }
   
   setCanvas = (a_canvas: HTMLCanvasElement) => {
@@ -137,6 +226,9 @@ export default class App extends React.Component {
             <button type="button" onClick={this.getSvg}>
               Export json
             </button>
+            
+            <br />
+            <CheckBoxArray game={this.getGame} ref={this.checkBoxArray} />
           </div>
         </div>
         
