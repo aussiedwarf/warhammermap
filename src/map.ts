@@ -33,6 +33,13 @@ function isAlphaNumeric(inputtxt){
   }
 }
 
+class VertexLod {
+  points: Array<Array<number>> = [];
+  boundingBox: vec4 = vec4.create();
+  longestEdge: number = 0;
+  complete: boolean = false;
+}
+
 class MapRef {
   image: HTMLImageElement;
   loaded: boolean = false;
@@ -48,12 +55,7 @@ class MapRef {
 
 class MapData {
   ref: Array<MapRef> = [];
-  coast: Array<Array<number>> = [];
-  mountains:Array<Array<number>> = [];
-  forest: Array<Array<number>> = [];
-  rivers: Array<Array<number>> = [];
-  boundingBox: Array<Array<vec4>> = [];
-  complete: Array<Array<boolean>> = [];
+  vertexLods: Array<Array<VertexLod>> = [];
 }
 
 export default class Map {
@@ -151,87 +153,62 @@ export default class Map {
     const context = this.context2d;
     const mapData = this.mapData;
     
-    context.strokeStyle = 'rgb(0,0,0)';
-    context.fillStyle = 'rgb(127,255,127)';
-    let prevComplete = true;
-    let prevDrawn = false;
-    for(let i = 0; i < mapData.coast.length; ++i){
-      const outside = 
-        mapData.boundingBox[0][i][0] > a_boundingBox[2] || 
-        mapData.boundingBox[0][i][2] < a_boundingBox[0] || 
-        mapData.boundingBox[0][i][1] > a_boundingBox[3] || 
-        mapData.boundingBox[0][i][3] < a_boundingBox[1];
-      if(!outside || (prevDrawn && !prevComplete)){
-        prevDrawn = true;
-        this.drawBezier(mapData.coast[i], mapData.complete[0][i], prevComplete, a_zoom);
-      }
-      else{
-        prevDrawn = false;
-      }
+    const stroke = ['rgb(0,0,0)','rgb(0,0,0)','rgb(0,0,0)', 'rgb(0,0,255)'];
+    const fill = ['rgb(127,255,127)', 'rgb(127,127,127)', 'rgb(0,127,0)', 'rgb(0,0,0)'];
+    
+    //polys
+    for(let j = 0; j < 3; ++j){
+      context.strokeStyle = stroke[j];
+      context.fillStyle = fill[j]
+      let prevComplete = true;
+      let prevDrawn = false;
+      
+      for(let i = 0; i < mapData.vertexLods[j].length; ++i){
+        const  vertexLod = mapData.vertexLods[j][i];
         
-      prevComplete = mapData.complete[0][i];
-    }    
-    
-    context.fillStyle = 'rgb(127,127,127)';
-    prevComplete = true;
-    prevDrawn = false;
-    for(let i = 0; i < mapData.mountains.length; ++i){
-      const outside = 
-        mapData.boundingBox[1][i][0] > a_boundingBox[2] || 
-        mapData.boundingBox[1][i][2] < a_boundingBox[0] || 
-        mapData.boundingBox[1][i][1] > a_boundingBox[3] || 
-        mapData.boundingBox[1][i][3] < a_boundingBox[1];
-      if(!outside || (prevDrawn && !prevComplete)){
-        prevDrawn = true;
-        this.drawBezier(mapData.mountains[i], mapData.complete[1][i], prevComplete, a_zoom);
-      }
-      else{
-        prevDrawn = false;
-      }
-      
-      prevComplete = mapData.complete[1][i];
+        const outside = 
+          vertexLod.boundingBox[0] > a_boundingBox[2] || 
+          vertexLod.boundingBox[2] < a_boundingBox[0] || 
+          vertexLod.boundingBox[1] > a_boundingBox[3] || 
+          vertexLod.boundingBox[3] < a_boundingBox[1];
+        if(!outside || (prevDrawn && !prevComplete)){
+          prevDrawn = true;
+          this.drawBezier(vertexLod.points[0], vertexLod.complete, prevComplete, a_zoom);
+        }
+        else{
+          prevDrawn = false;
+        }
+          
+        prevComplete = vertexLod.complete;
+      }    
     }
     
-    prevComplete = true;
-    prevDrawn = false;
-    for(let i = 0; i < mapData.forest.length; ++i){
-      context.fillStyle = 'rgb(0,127,0)';
-      const outside = 
-        mapData.boundingBox[2][i][0] > a_boundingBox[2] || 
-        mapData.boundingBox[2][i][2] < a_boundingBox[0] || 
-        mapData.boundingBox[2][i][1] > a_boundingBox[3] || 
-        mapData.boundingBox[2][i][3] < a_boundingBox[1];
-      if(!outside || (prevDrawn && !prevComplete)){
-        prevDrawn = true;
-        this.drawBezier(mapData.forest[i], mapData.complete[2][i], prevComplete, a_zoom);
-      }
-      else{
-        prevDrawn = false;
-      }
+    //lines
+    for(let j = 3; j < 4; ++j){
+      context.strokeStyle = stroke[j];
+      context.fillStyle = fill[j]
+      let prevComplete = true;
+      let prevDrawn = false;
       
-      prevComplete = mapData.complete[2][i];
+      for(let i = 0; i < mapData.vertexLods[j].length; ++i){
+        const  vertexLod = mapData.vertexLods[j][i];
+        
+        const outside = 
+          vertexLod.boundingBox[0] > a_boundingBox[2] || 
+          vertexLod.boundingBox[2] < a_boundingBox[0] || 
+          vertexLod.boundingBox[1] > a_boundingBox[3] || 
+          vertexLod.boundingBox[3] < a_boundingBox[1];
+        if(!outside || (prevDrawn && !prevComplete)){
+          prevDrawn = true;
+          this.drawBezierLine(vertexLod.points[0], a_zoom);
+        }
+        else{
+          prevDrawn = false;
+        }
+          
+        prevComplete = vertexLod.complete;
+      }    
     }
-    
-    context.strokeStyle = 'rgb(0,0,255)';
-    prevComplete = true;
-    prevDrawn = false;
-    for(let i = 0; i < mapData.rivers.length; ++i){
-      const outside = 
-        mapData.boundingBox[3][i][0] > a_boundingBox[2] || 
-        mapData.boundingBox[3][i][2] < a_boundingBox[0] || 
-        mapData.boundingBox[3][i][1] > a_boundingBox[3] || 
-        mapData.boundingBox[3][i][3] < a_boundingBox[1];
-      if(!outside || (prevDrawn && !prevComplete)){
-        prevDrawn = true;
-        this.drawBezierLine(mapData.rivers[i], a_zoom);
-      }
-      else{
-        prevDrawn = false;
-      }
-      
-      prevComplete = mapData.complete[3][i];
-    }
-    
     
     context.globalAlpha = 0.5;
     
@@ -249,35 +226,31 @@ export default class Map {
   importMap = () => {
     
     const mapData = this.mapData;
-    mapData.boundingBox.push([]);
-    mapData.complete.push([]);
+    mapData.vertexLods.push([]);
     
     //const parser = new DOMParser();
     //const xmlDoc = parser.parseFromString(this.text,"text/xml");
     const coast = rawMapData.coast;
     for(let i = 0; i < coast.length; ++i){
-      this.importSvg(coast[i], mapData.coast, mapData.boundingBox[0], mapData.complete[0]);
+      this.importSvg(coast[i], mapData.vertexLods[0]);
     }
     
-    mapData.boundingBox.push([]);
-    mapData.complete.push([]);
+    mapData.vertexLods.push([]);
     const mountains = rawMapData.mountains;
     for(let i = 0; i < mountains.length; ++i){
-      this.importSvg(mountains[i], mapData.mountains, mapData.boundingBox[1], mapData.complete[1]);
+      this.importSvg(mountains[i], mapData.vertexLods[1]);
     }
     
-    mapData.boundingBox.push([]);
-    mapData.complete.push([]);
+    mapData.vertexLods.push([]);
     const forest = rawMapData.forest;
     for(let i = 0; i < forest.length; ++i){
-      this.importSvg(forest[i], mapData.forest, mapData.boundingBox[2], mapData.complete[2]);
+      this.importSvg(forest[i], mapData.vertexLods[2]);
     }
     
-    mapData.boundingBox.push([]);
-    mapData.complete.push([]);
+    mapData.vertexLods.push([]);
     const rivers = rawMapData.rivers;
     for(let i = 0; i < rivers.length; ++i){
-      this.importSvg(rivers[i], mapData.rivers, mapData.boundingBox[3], mapData.complete[3]);
+      this.importSvg(rivers[i], mapData.vertexLods[3]);
     }
     
     
@@ -316,8 +289,9 @@ export default class Map {
   }
   */
   
-  importSvg = (a_data: string, a_buffer: Array<Array<number>>, a_boundingBox: Array<vec4>, a_complete: Array<boolean>) => {
-    
+  //importSvg = (a_data: string, a_buffer: Array<Array<number>>, a_boundingBox: Array<vec4>, a_complete: Array<boolean>) => {
+  importSvg = (a_data: string, a_vertexLods: Array<VertexLod>) => {
+    let vertexLod = new VertexLod;
     const points = [];
     let num = false;
     let value = "";
@@ -497,22 +471,23 @@ export default class Map {
         points[i+5] += points[i-1];
     }
     
-    const boundingBox = vec4.fromValues(points[0], points[1], points[2], points[3]);
+    vec4.set(vertexLod.boundingBox, points[0], points[1], points[2], points[3]);
     
     for(let i = 6; i < points.length; i+=6){
-      boundingBox[0] = Math.min(boundingBox[0], points[i]);
-      boundingBox[1] = Math.min(boundingBox[1], points[i+1]);
-      boundingBox[2] = Math.max(boundingBox[2], points[i]);
-      boundingBox[3] = Math.max(boundingBox[3], points[i+1]);
+      vertexLod.boundingBox[0] = Math.min(vertexLod.boundingBox[0], points[i]);
+      vertexLod.boundingBox[1] = Math.min(vertexLod.boundingBox[1], points[i+1]);
+      vertexLod.boundingBox[2] = Math.max(vertexLod.boundingBox[2], points[i]);
+      vertexLod.boundingBox[3] = Math.max(vertexLod.boundingBox[3], points[i+1]);
     }
+    vertexLod.points.push(points);
+    vertexLod.complete = complete;
+    vertexLod.longestEdge = Math.max(vertexLod.boundingBox[2] - vertexLod.boundingBox[0], vertexLod.boundingBox[3] - vertexLod.boundingBox[1]);
     
-    a_buffer.push(points);
-    a_boundingBox.push(boundingBox);
-    a_complete.push(complete);
+    a_vertexLods.push(vertexLod);
   }
   
   exportJson = () => {
-    
+    /*
     const map = {
     coast: this.mapData.coast, 
     mountains: this.mapData.mountains,
@@ -525,6 +500,7 @@ export default class Map {
     const filename = "map.json";
     const blob = new Blob([data], {type: "application:json;charset=utf-8"});
     saveAs(blob, filename);
+    */
   }
   
 }
