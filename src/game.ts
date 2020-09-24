@@ -20,6 +20,13 @@ lifespan
 * old 40-64
 * vulnerable 65+
 
+
+corruption
+* chaos
+* vampire
+* skaven
+* orc
+
 *******************************************************************************/
 
 import Mouse from './mouse';
@@ -157,7 +164,7 @@ export default class Game {
     }
   
   
-    this.map = new Map(canvas);
+    this.map = new Map(canvas, this.render);
 
   
     /*todo

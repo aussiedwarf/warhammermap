@@ -60,17 +60,21 @@ export default class Map {
   canvas: HTMLCanvasElement;
   context2d: CanvasRenderingContext2D;
   mapData: MapData;
+  redraw: () => void;
   //text: string = xmlData.default;
   
-  constructor(a_canvas: HTMLCanvasElement){
+  constructor(a_canvas: HTMLCanvasElement, a_redraw: () => void){
     this.canvas = a_canvas;
     this.context2d = a_canvas.getContext("2d");
     
     this.mapData = new MapData;
     
+    this.redraw = a_redraw;
+    
     
     this.importMap();
   }  
+  
   
   toggleRefImage = (a_show: boolean, a_index: number) => {
     const ref = this.mapData.ref[a_index];
@@ -82,10 +86,12 @@ export default class Map {
       
       ref.image.onload = () => {
         ref.loaded = true;
+        this.redraw();
       };
       ref.image.onerror = () => {alert("error loading image");};
       ref.image.src = ref.link;
     }
+    this.redraw();
 
   }
   
@@ -148,33 +154,46 @@ export default class Map {
     context.strokeStyle = 'rgb(0,0,0)';
     context.fillStyle = 'rgb(127,255,127)';
     let prevComplete = true;
+    let prevDrawn = false;
     for(let i = 0; i < mapData.coast.length; ++i){
       const outside = 
         mapData.boundingBox[0][i][0] > a_boundingBox[2] || 
         mapData.boundingBox[0][i][2] < a_boundingBox[0] || 
         mapData.boundingBox[0][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[0][i][3] < a_boundingBox[1];
-      if(!outside)
+      if(!outside || (prevDrawn && !prevComplete)){
+        prevDrawn = true;
         this.drawBezier(mapData.coast[i], mapData.complete[0][i], prevComplete, a_zoom);
+      }
+      else{
+        prevDrawn = false;
+      }
         
       prevComplete = mapData.complete[0][i];
     }    
     
     context.fillStyle = 'rgb(127,127,127)';
     prevComplete = true;
+    prevDrawn = false;
     for(let i = 0; i < mapData.mountains.length; ++i){
       const outside = 
         mapData.boundingBox[1][i][0] > a_boundingBox[2] || 
         mapData.boundingBox[1][i][2] < a_boundingBox[0] || 
         mapData.boundingBox[1][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[1][i][3] < a_boundingBox[1];
-      if(!outside)
+      if(!outside || (prevDrawn && !prevComplete)){
+        prevDrawn = true;
         this.drawBezier(mapData.mountains[i], mapData.complete[1][i], prevComplete, a_zoom);
+      }
+      else{
+        prevDrawn = false;
+      }
       
       prevComplete = mapData.complete[1][i];
     }
     
     prevComplete = true;
+    prevDrawn = false;
     for(let i = 0; i < mapData.forest.length; ++i){
       context.fillStyle = 'rgb(0,127,0)';
       const outside = 
@@ -182,22 +201,33 @@ export default class Map {
         mapData.boundingBox[2][i][2] < a_boundingBox[0] || 
         mapData.boundingBox[2][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[2][i][3] < a_boundingBox[1];
-      if(!outside)
+      if(!outside || (prevDrawn && !prevComplete)){
+        prevDrawn = true;
         this.drawBezier(mapData.forest[i], mapData.complete[2][i], prevComplete, a_zoom);
+      }
+      else{
+        prevDrawn = false;
+      }
       
       prevComplete = mapData.complete[2][i];
     }
     
     context.strokeStyle = 'rgb(0,0,255)';
     prevComplete = true;
+    prevDrawn = false;
     for(let i = 0; i < mapData.rivers.length; ++i){
       const outside = 
         mapData.boundingBox[3][i][0] > a_boundingBox[2] || 
         mapData.boundingBox[3][i][2] < a_boundingBox[0] || 
         mapData.boundingBox[3][i][1] > a_boundingBox[3] || 
         mapData.boundingBox[3][i][3] < a_boundingBox[1];
-      if(!outside)
+      if(!outside || (prevDrawn && !prevComplete)){
+        prevDrawn = true;
         this.drawBezierLine(mapData.rivers[i], a_zoom);
+      }
+      else{
+        prevDrawn = false;
+      }
       
       prevComplete = mapData.complete[3][i];
     }
@@ -252,18 +282,18 @@ export default class Map {
     
     
     for(let i = 0; i < rawMapData.ref.length; ++i){
-    const ref = new MapRef;
-    const src = rawMapData.ref[i];
-    
-    ref.name = src.name;
-    ref.link = src.link;
-    ref.width= src.width;
-    ref.height = src.height;
-    ref.x = src.x;
-    ref.y = src.y;
-    
-    mapData.ref.push(ref);
-  }
+      const ref = new MapRef;
+      const src = rawMapData.ref[i];
+      
+      ref.name = src.name;
+      ref.link = src.link;
+      ref.width= src.width;
+      ref.height = src.height;
+      ref.x = src.x;
+      ref.y = src.y;
+      
+      mapData.ref.push(ref);
+    }    
   }
   
   /*
