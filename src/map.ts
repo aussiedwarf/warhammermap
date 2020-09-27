@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *******************************************************************************/
 import { saveAs } from 'file-saver';
-import { vec4 } from 'gl-matrix';
+import { vec2, vec4, mat4 } from 'gl-matrix';
 import * as rawMapData from './data/raw.json';
 //import * as xmlData from './data/raw.txt';
 
@@ -149,13 +149,15 @@ export default class Map {
   }
 
   
-  draw = (a_zoom: number, a_boundingBox: vec4) => {
+  draw = (a_mvp: mat4, a_zoom: number, a_boundingBox: vec4) => {
     const context = this.context2d;
     const mapData = this.mapData;
     
     const stroke = ['rgb(0,0,0)','rgb(0,0,0)','rgb(0,0,0)', 'rgb(0,0,255)'];
     const fill = ['rgb(127,255,127)', 'rgb(127,127,127)', 'rgb(0,127,0)', 'rgb(0,0,0)'];
     
+    const lodDiv = 4;
+
     //polys
     for(let j = 0; j < 3; ++j){
       context.strokeStyle = stroke[j];
@@ -173,7 +175,35 @@ export default class Map {
           vertexLod.boundingBox[3] < a_boundingBox[1];
         if(!outside || (prevDrawn && !prevComplete)){
           prevDrawn = true;
-          this.drawBezier(vertexLod.points[0], vertexLod.complete, prevComplete, a_zoom);
+          const numLevels = vertexLod.points.length;
+
+          const lenVecIn = vec4.fromValues(vertexLod.longestEdge,0,0,0);
+          const lenVec = vec4.create();
+          vec4.transformMat4(lenVec, lenVecIn, a_mvp);
+          const levelLog = numLevels-Math.ceil(Math.log2(lenVec[0]/lodDiv));
+          const level = Math.min(Math.max(levelLog, 0), numLevels-1);
+          
+
+          this.drawBezier(vertexLod.points[level], vertexLod.complete, prevComplete, a_zoom);
+
+          //debug circles
+          /*
+          context.strokeStyle = 'rgb(255,0,0)';
+          for(let j = 0; j < vertexLod.points[level].length; j+=6){
+            this.context2d.beginPath();
+            this.context2d.arc(vertexLod.points[level][j], vertexLod.points[level][j+1], 1 / a_zoom, 0, 2 * Math.PI);
+            this.context2d.stroke();
+          }
+          context.strokeStyle = 'rgb(0,255,255)';
+          for(let j = 2; j < vertexLod.points[level].length; j+=2){
+            if(j%6){
+              this.context2d.beginPath();
+              this.context2d.arc(vertexLod.points[level][j], vertexLod.points[level][j+1], 1 / a_zoom, 0, 2 * Math.PI);
+              this.context2d.stroke();
+            }
+          }
+          */
+          
         }
         else{
           prevDrawn = false;
@@ -200,7 +230,16 @@ export default class Map {
           vertexLod.boundingBox[3] < a_boundingBox[1];
         if(!outside || (prevDrawn && !prevComplete)){
           prevDrawn = true;
-          this.drawBezierLine(vertexLod.points[0], a_zoom);
+
+          const numLevels = vertexLod.points.length;
+
+          const lenVecIn = vec4.fromValues(vertexLod.longestEdge,0,0,0);
+          const lenVec = vec4.create();
+          vec4.transformMat4(lenVec, lenVecIn, a_mvp);
+          const levelLog = numLevels-Math.ceil(Math.log2(lenVec[0]/lodDiv));
+          const level = Math.min(Math.max(levelLog, 0), numLevels-1);
+
+          this.drawBezierLine(vertexLod.points[level], a_zoom);
         }
         else{
           prevDrawn = false;
@@ -302,7 +341,7 @@ export default class Map {
     let pointCount = 0;
     let complete = true;
     
-    for(let i = 0; i < a_data.length; ++i){
+    for(let i = 0; i < a_data.length ; ++i){
       
       if(a_data[i] == 'M' || a_data[i] == 'm' || a_data[i] == 'c'){
         if(num){
@@ -483,7 +522,101 @@ export default class Map {
     vertexLod.complete = complete;
     vertexLod.longestEdge = Math.max(vertexLod.boundingBox[2] - vertexLod.boundingBox[0], vertexLod.boundingBox[3] - vertexLod.boundingBox[1]);
     
+    this.createLods(vertexLod);
+
     a_vertexLods.push(vertexLod);
+
+    
+  }
+
+  createLods = (a_vertexLod: VertexLod) => {
+    
+    let numPoints = 1;
+    let totalDistance = 0;
+    let avgDistance = 0;
+
+    let points = a_vertexLod.points[0];
+    const prevPoint = vec2.fromValues(points[0], points[1]);
+
+    for(let i = 6; i < points.length; i+=6){
+      ++numPoints;
+
+      const x = prevPoint[0] - points[i];
+      const y = prevPoint[1] - points[i+1];
+      totalDistance += Math.sqrt(x*x + y*y);
+
+      prevPoint[0] = points[i];
+      prevPoint[1] = points[i+1];
+
+    }
+
+    avgDistance = totalDistance / numPoints;
+
+    let levels = Math.ceil(Math.log2(a_vertexLod.longestEdge / avgDistance));
+    let distCutoff = avgDistance * 2;
+
+    prevPoint[0] = points[0];
+    prevPoint[1] = points[1];
+
+    if(levels > 0){
+      for(let level = 1; level < levels; ++level){
+        let newPoints = [];
+        newPoints.push(points[0]);
+        newPoints.push(points[1]);
+
+        let lastIndex = 0;
+        const numIndexes = (points.length-2)/6+1;
+
+        for(let i = 1; i < numIndexes; ++i){
+          ++numPoints;
+    
+          const x = prevPoint[0] - points[i*6];
+          const y = prevPoint[1] - points[i*6+1];
+          const dist = Math.sqrt(x*x + y*y);
+    
+          if(dist >= distCutoff || i == numIndexes-1){
+            const middle = (i-lastIndex)*3 - 1;
+            let total = [0,0];
+            let count = 0;
+            
+            //add first benzier curve point
+            for(let j = 0; j < Math.floor(middle/2); ++j){
+              total[0] += points[lastIndex*6 + j*2+2];
+              total[1] += points[lastIndex*6 + j*2+3];
+              ++count;
+            }
+            newPoints.push(total[0] / count);
+            newPoints.push(total[1] / count);
+
+            prevPoint[0] = points[i*6];
+            prevPoint[1] = points[i*6+1];
+
+            total[0] = 0;
+            total[1] = 0;
+            count = 0;
+
+            //add second benzier curve point
+            for(let j = Math.floor(middle/2); j < middle; ++j){
+              total[0] += points[lastIndex*6 + j*2+2];
+              total[1] += points[lastIndex*6 + j*2+3];
+              ++count;
+            }
+            newPoints.push(total[0] / count);
+            newPoints.push(total[1] / count);
+
+            newPoints.push(prevPoint[0]);
+            newPoints.push(prevPoint[1]);
+
+            lastIndex = i;
+          }
+    
+        }
+        distCutoff *= 2;
+        points = newPoints;
+        a_vertexLod.points.push(newPoints);
+      }
+    }
+
   }
   
   exportJson = () => {

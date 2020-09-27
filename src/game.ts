@@ -419,7 +419,7 @@ export default class Game {
     }
     
     
-    this.map.draw(this.zoom, boundingBox);
+    this.map.draw(this.mvp, this.zoom, boundingBox);
     
     context.lineWidth = 1;
     
