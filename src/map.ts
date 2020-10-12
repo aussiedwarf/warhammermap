@@ -180,30 +180,31 @@ export default class Map {
           const lenVecIn = vec4.fromValues(vertexLod.longestEdge,0,0,0);
           const lenVec = vec4.create();
           vec4.transformMat4(lenVec, lenVecIn, a_mvp);
-          const levelLog = numLevels-Math.ceil(Math.log2(lenVec[0]/lodDiv));
-          const level = Math.min(Math.max(levelLog, 0), numLevels-1);
-          
+          if(lenVec[0] >= 1.0){
+            const levelLog = numLevels-Math.ceil(Math.log2(lenVec[0]/lodDiv));
+            const level = Math.min(Math.max(levelLog, 0), numLevels-1);
+            
 
-          this.drawBezier(vertexLod.points[level], vertexLod.complete, prevComplete, a_zoom);
+            this.drawBezier(vertexLod.points[level], vertexLod.complete, prevComplete, a_zoom);
 
-          //debug circles
-          /*
-          context.strokeStyle = 'rgb(255,0,0)';
-          for(let j = 0; j < vertexLod.points[level].length; j+=6){
-            this.context2d.beginPath();
-            this.context2d.arc(vertexLod.points[level][j], vertexLod.points[level][j+1], 1 / a_zoom, 0, 2 * Math.PI);
-            this.context2d.stroke();
-          }
-          context.strokeStyle = 'rgb(0,255,255)';
-          for(let j = 2; j < vertexLod.points[level].length; j+=2){
-            if(j%6){
+            //debug circles
+            /*
+            context.strokeStyle = 'rgb(255,0,0)';
+            for(let j = 0; j < vertexLod.points[level].length; j+=6){
               this.context2d.beginPath();
               this.context2d.arc(vertexLod.points[level][j], vertexLod.points[level][j+1], 1 / a_zoom, 0, 2 * Math.PI);
               this.context2d.stroke();
             }
+            context.strokeStyle = 'rgb(0,255,255)';
+            for(let j = 2; j < vertexLod.points[level].length; j+=2){
+              if(j%6){
+                this.context2d.beginPath();
+                this.context2d.arc(vertexLod.points[level][j], vertexLod.points[level][j+1], 1 / a_zoom, 0, 2 * Math.PI);
+                this.context2d.stroke();
+              }
+            }
+            */
           }
-          */
-          
         }
         else{
           prevDrawn = false;
@@ -620,20 +621,72 @@ export default class Map {
   }
   
   exportJson = () => {
+    
     /*
+
+class VertexLod {
+  points: Array<Array<number>> = [];
+  boundingBox: vec4 = vec4.create();
+  longestEdge: number = 0;
+  complete: boolean = false;
+}
+
+class MapRef {
+  image: HTMLImageElement;
+  loaded: boolean = false;
+  loading: boolean = false;
+  show: boolean = false;
+  name: string = "";
+  link: string = "";
+  width: number = 0;
+  height: number = 0;
+  x: number = 0;
+  y: number = 0;
+}
+
+class MapData {
+  ref: Array<MapRef> = [];
+  vertexLods: Array<Array<VertexLod>> = [];
+}
+    */
     const map = {
-    coast: this.mapData.coast, 
-    mountains: this.mapData.mountains,
-    forest: this.mapData.forest,
-    rivers: this.mapData.rivers,
-    complete: this.mapData.complete};
+      mapref: [],
+      verts: []
+    };
+
+    for(let i = 0; i < this.mapData.ref.length; ++i){
+      const data = this.mapData.ref[i];
+      map.mapref.push({
+        name: data.name,
+        link: data.link,
+        width: data.width,
+        height: data.height,
+        x: data.x,
+        y: data.y
+      });
+    }
+
+    for(let i = 0; i < this.mapData.vertexLods.length; ++i){
+      const data = this.mapData.vertexLods[i];
+      map.verts.push([]);
+
+      for(let j = 0; j < data.length; ++j){
+        const lod = data[j];
+        map.verts[i].push({
+          points: lod.points[0],
+          complet: lod.complete
+        });
+  
+        
+      }
+    }
   
     const data = JSON.stringify(map);
     
     const filename = "map.json";
     const blob = new Blob([data], {type: "application:json;charset=utf-8"});
     saveAs(blob, filename);
-    */
+    
   }
   
 }
