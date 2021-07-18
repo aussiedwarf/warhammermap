@@ -1,12 +1,10 @@
 {
   "name": "warhammer",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "Map for Warhammer",
   "keywords": [
-    "OpenShift",
-    "Node.js",
-    "application",
-    "openshift"
+    "warhammer",
+    "map"
   ],
   "author": {
     "name": "Eden Harris",
@@ -19,8 +17,8 @@
     "url": "https://github.com/aussiedwarf/warhammermap"
   },
   "scripts": {
-    "buildDev": "rm -rf dist && webpack --mode development --config webpack.server.config.js && webpack --mode development --config webpack.dev.config.js && cp -ar src/data/images dist/images",
-    "buildProd": "rm -rf dist && webpack --mode production --config webpack.server.config.js && webpack --mode production --config webpack.prod.config.js && cp -ar src/data/images dist/images",
+    "buildDev": "rm -rf dist && webpack --mode development --config webpack.server.config.js && webpack --mode development --config webpack.dev.config.js && cp -r src/data/images dist/images",
+    "buildProd": "rm -rf dist && webpack --mode production --config webpack.server.config.js && webpack --mode production --config webpack.prod.config.js && cp -r src/data/images dist/images",
     "start": "node ./dist/server.js",
     "analyze": "source-map-explorer dist/main.*"
   },
