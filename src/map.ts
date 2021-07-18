@@ -51,6 +51,7 @@ class MapRef {
   height: number = 0;
   x: number = 0;
   y: number = 0;
+  rotate: number = 0;
 }
 
 class MapData {
@@ -256,7 +257,10 @@ export default class Map {
       const ref = this.mapData.ref[i];
     
       if(ref.loaded && ref.show){
+        context.save();
+        context.rotate(ref.rotate);
         context.drawImage(ref.image, ref.x, ref.y, ref.width, ref.height);
+        context.restore();
       }
     }
     
@@ -304,6 +308,9 @@ export default class Map {
       ref.height = src.height;
       ref.x = src.x;
       ref.y = src.y;
+      if(src.rotate){
+        ref.rotate = src.rotate / 360.0 * Math.PI * 2.0;
+      }
       
       mapData.ref.push(ref);
     }    
